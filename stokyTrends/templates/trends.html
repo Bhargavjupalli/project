@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Include Plotly JS library -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        #navbar {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            text-align: right;
+        }
+        #navbar a {
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: bold;
+        }
+        #content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+        label {
+            font-weight: bold;
+            color: #555;
+            margin-right: 10px;
+            padding-left: 20px;
+        }
+        
+
+        input[type="date"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #131212;
+            color: white;
+            margin-left: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #555;
+        }
+        #new-graph {
+            margin-top: 20px;
+        }
+        #graph-div {
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="navbar">
+        <a href="/">Home</a>
+    </div>
+    <div id="content">
+        <h1>{{ symbol }} Chart</h1>
+        
+        <h2>Current Price: {{ current_price}}</h2>
+        <!-- Form to input date -->
+    
+        {% if graph_html %}
+        <div id="graph-div">
+            {{ graph_html | safe }}
+        </div>
+        {% endif %}
+        <h2>Select Range</h2>
+        <form method="post" action="{% url 'trends' %}">
+            {% csrf_token %}
+            <input type="hidden" id="symbol" name="symbol" value="{{ symbol }}">
+            <label for="start_date">From:</label>
+            <input type="date" id="start_date" name="start_date" required>
+            <label for="end_date">To:</label>
+            <input type="date" id="end_date" name="end_date" required>
+            <button type="submit">Generate Graph</button>
+        </form>
+
+        {% if modified_graph_html %}
+        <div id="modified-graph">
+            <h2>Chart From {{start_date}} To {{end_date}}</h2>
+            {{ modified_graph_html | safe }}
+        </div>
+        {% endif %}
+    </div>
+
+    <form action="{% url 'prediction' %}">
+        <button type="submit">prediction</button>
+    </form>
+   
+    
+</body>
+</html>
