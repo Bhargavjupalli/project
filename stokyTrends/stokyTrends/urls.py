@@ -19,10 +19,12 @@ from django.urls import path
 from .views import main
 from stockapp.views import graph_view
 from stockapp.views import stock_prediction
+from stockapp.views import Analysis
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("",main,name='main'),
     path("trends/",graph_view,name='trends'),
     path("prediction/",stock_prediction,name='prediction'),
+    path("analysis/",Analysis,name= 'analysis'),
 ]

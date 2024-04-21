@@ -1,58 +1,44 @@
 import pandas as pd
 import numpy as np
+from yahoo_fin.stock_info import get_data
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler
-from tensorflow import keras
-from keras.models import Model
+import tensorflow as tf
 from keras.models import load_model
-import plotly.express as px
-
-
+from datetime import datetime
+from sklearn.preprocessing import MinMaxScaler
+import plotly.graph_objects as go
 # load model
-savedModel=load_model("C:\\Users\\bhargav\\project-1\\stokyTrends\\stockapp\\LSTM_model")
-
-def preprocessing_for_prediction(data):
-    if data['close'].dtype == 'object':
-        data['close']=pd.to_numeric(data['close'],errors='coerce')
-    traindata=data.loc[:,['close']]
-    traindata.dropna(axis=0,inplace=True)
-    sc = MinMaxScaler(feature_range=(0,1))
-    preprocessed_data = sc.fit_transform(traindata)
-    return preprocessed_data
-def splitting_data(preprocessed_data):
-    x_train = []
-    y_train = []
-    for i in range (60,1149): #60 : timestep // 1149 : length of the data
-        x_train.append(preprocessed_data[i-60:i,0]) 
-        y_train.append(preprocessed_data[i,0])
-
-    x_train,y_train = np.array(x_train),np.array(y_train)
-    return x_train,y_train
-
-def predict(x_train):
-    y_pred = savedModel.predict(x_train)
-    return y_pred
-
-def plotting_graph(y_train, y_pred):
-    # Reshape y_pred to be 1-dimensional
-    y_pred_1d = y_pred.flatten()
-    
-    # Create a DataFrame to hold the actual values
-    data = pd.DataFrame({'Actual': y_train}, index=np.arange(len(y_train)))
-    
-    # Create a Series for the predicted values with the same index as y_train
-    predicted_series = pd.Series(y_pred_1d, index=np.arange(len(y_train)))
-    
-    # Create a line plot using Plotly Express
-    fig = px.line(data, title='Stock Price Prediction', labels={'index': 'Time', 'value': 'Stock Price'})
-    
-    # Add the predicted values to the plot
-    fig.add_scatter(x=data.index, y=predicted_series, mode='lines', line=dict(color='green'), name='Predicted Stock Price')
-    
-    # Customize the appearance of the plot if needed
-    fig.update_traces(line=dict(color='red'), name='Actual Stock Price')
-    fig.update_layout(xaxis_title='Time', yaxis_title='Stock Price')
-    fig.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01))
-    
-    # Show the Plotly graph
+savedModel=load_model("lstm_model.h5")
+def get_the_data(symbol):
+    df =get_data(symbol, start_date='2023-01-01')
+    return df
+scaler = MinMaxScaler(feature_range=(0,1))
+def predictt(df):
+    data = df.filter(['close'])
+    dataset = data.values
+    scaled_data = scaler.fit_transform(dataset)
+    test_data = scaled_data[:]
+    x_test = []
+    y_test = dataset[60:,:]
+    for i in range(60, len(test_data)):
+        x_test.append(test_data[i-60:i, 0])
+    x_test = np.array(x_test)
+    x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1 ))
+    x_test.shape,y_test.shape
+    predictions = savedModel.predict(x_test)
+    predictions = scaler.inverse_transform(predictions)
+    rmse = np.sqrt(np.mean(((predictions - y_test) ** 2)))
+    return predictions,y_test,scaled_data
+def predicted_price(scaled_data):
+    last_60_days = scaled_data[-60:]
+    input_data = np.array(last_60_days).reshape(1, -1, 1)
+    predicted_scaled_price = savedModel.predict(input_data)
+    predicted_price = scaler.inverse_transform(predicted_scaled_price)
+    return predicted_price[0][0]
+def predicted_graph(df,predictions,y_test):
+    dates = df.index[-len(y_test):]
+    trace_actual = go.Scatter(x=dates, y=y_test.flatten(), mode='lines', name='Actual Stock Price', line=dict(color='blue'))
+    trace_predicted = go.Scatter(x=dates, y=predictions.flatten(), mode='lines', name='Predicted Stock Price', line=dict(color='red'))
+    layout = go.Layout(xaxis=dict(title='Date'), yaxis=dict(title='Stock Price'))
+    fig = go.Figure(data=[trace_actual, trace_predicted], layout=layout)
     return fig
