@@ -1,0 +1,8 @@
+1)Download the LAS folder
+2)Download and Install Xampp in your local system
+3)Place the LAS folder in xampp/htdocs
+4)open xampp and start apache and mysql
+5)open localhost/phpmyadmin in browser
+6) create the database and name as phpdb
+7)open the database and import the phpdb.sql from LAS folder
+8)open localhost/LAS/login.php in browser
